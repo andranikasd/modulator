@@ -4,7 +4,7 @@ set -e
 # set -x
 
 DATE=$(date +'%Y-%m-%dT%H:%M:%S%z')
-bmd_root=".modules"
+bmd_root=".bmd"
 declare -A COLORS
 
 COLORS[info]='\033[0;37m'
@@ -51,31 +51,25 @@ _init() {
 
   shift # Shifting to not get functions name
   local arguments=("${@}")
+  local install_dir
 
   # Parsing the arguments to function
   for ((i = 0; i < ${#arguments[@]}; i++)); do
     case "${arguments[i]}" in
-    --global)
-      init_global
-      return
+    --global | -g | global | glob)
+      install_dir="${HOME}"
+      break
       ;;
     *)
-      local project_dir="${arguments[i]}"
-      init_local "${project_dir}"
+      install_dir="${arguments[i]}"
       ;;
     esac
-
   done
-}
 
-init_global() {
-  info "Running global module installation ..."
-}
-
-init_local() {
-  local install_dir=$1
-  info "Running local module installation ..."
   info "Directory to install -> ${install_dir}"
+  local current_bmd_root="${install_dir}/${bmd_root}"
+  mkdir -p "${current_bmd_root}"
+  touch "${current_bmd_root}/bmd.json"
 }
 
 clone_git_repo() {
@@ -109,24 +103,7 @@ clone_git_repo() {
   info "Cloned ${1} for module named ${2}"
 }
 
-is_module_installed() {
-  # ------------------------------
-  # Checks if module was installed already. If yes returns it's version, if no returns 0
-  # Globals:
-  #   modules_directory: The directory where we are outting used modules and configs
-  # Arguments:
-  #   module: $1 -> Name of the module to check for
-  # Rerurns:
-  #   version if module is installed, 0 instead
-  # ------------------------------
-  if [[ $# -eq 0 ]]; then
-    err "Module name is required to provide" && exit 1
-  fi
-  local module=$1
-
-}
-
-handle_user_input() {
+start_bmd() {
   if [[ "${#}" -eq 0 ]]; then
     err "No command options was provided"
     _help
@@ -149,4 +126,4 @@ handle_user_input() {
   esac
 }
 
-handle_user_input "${@}"
+start_bmd "${@}"

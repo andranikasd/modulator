@@ -5,11 +5,19 @@ Modulator is an package manager for bash
 # TODO: Build and Implement the "Modulator" Project
 
 ## 1. Install Module
+### 1.0 Base utils setup 
+- [ ] Get something like logger
+    - [x] Log info 
+    - [x] Log warnings 
+    - [x] Log errors with additional info ?
 ### 1.1. Clone Repositories
 - [ ] Add functionality to clone repositories:
+  - [x] Just clone a repository
+  - [ ] If it's already there then try to update it
   - [ ] Clone by **branch**.
   - [ ] Clone by **tag**.
   - [ ] Clone by **release** (fetch latest or specific).
+  - [ ] Nest this cloning logic into version based cloning ?
   - [ ] Validate the source repository URL (e.g., check if it's reachable).
 
 ### 1.2. Read Configuration File

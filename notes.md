@@ -5,12 +5,11 @@ Here's a refactored, more effective, and atomic checklist for the "Modulator" pr
 ## 1. Install Module
 
 ### 1.0 Base Utilities Setup
-- [ ] Create a logger utility:
+- [x] Create a logger utility:
   - [x] Implement `log_info` for standard logs.
   - [x] Implement `log_warning` for warnings.
   - [x] Implement `log_error` to log errors with detailed info.
-  - [ ] Create a centralized logger file for reuse.
-- [ ] Test the logger utility for various log levels.
+- [x] Test the logger utility for various log levels.
 
 ### 1.1 Clone Repositories
 - [ ] Create a function to handle basic repository cloning:

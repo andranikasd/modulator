@@ -43,7 +43,7 @@ _help() {
 }
 
 _init() {
-  if [[ "${#}" -le 1 ]]; then
+  if [[ "${#}" -eq 0 ]]; then
     err "Looks like you dont know how to use this ..."
     _help
     exit 1
@@ -51,7 +51,7 @@ _init() {
 
   shift # Shifting to not get functions name
   local arguments=("${@}")
-  local install_dir
+  local install_dir="${PWD}"
 
   # Parsing the arguments to function
   for ((i = 0; i < ${#arguments[@]}; i++)); do
@@ -61,15 +61,26 @@ _init() {
       break
       ;;
     *)
+      if [[ ! -d "${arguments[i]}" ]]; then
+        err "Provided directory does not exists"
+        exit 1
+      fi
       install_dir="${arguments[i]}"
       ;;
     esac
   done
 
+  # Ensure install_dir is set
+  if [[ -z "${install_dir}" ]]; then
+    err "Installation directory could not be determined."
+    _help
+    exit 1
+  fi
+
   info "Directory to install -> ${install_dir}"
   local current_bmd_root="${install_dir}/${bmd_root}"
   mkdir -p "${current_bmd_root}"
-  touch "${current_bmd_root}/bmd.json"
+  echo "[]" >"${current_bmd_root}/bmd.json"
 }
 
 clone_git_repo() {

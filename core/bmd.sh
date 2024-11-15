@@ -37,9 +37,23 @@ err() {
   echo -e "${COLORS[time]}${DATE}${COLORS[reset]} |${COLORS[error]}ERROR${COLORS[reset]}| ${1}"
 }
 
+_install() {
+  if [[ -z ${BMD_CONFIG_DIR} ]]; then
+    err "Oops ... Please set BMD_CONFIG_DIR environment variable"
+    exit 1
+  fi
+  if [[ ! -d "${BMD_CONFIG_DIR}" && ! -d "${HOME}/.bmd" ]]; then
+    err "Oops ... Your BMD config file is not found"
+  fi
+  info "Installing package .. "
+}
+
 # Available commands `install`, `update`, `remove`, `help`
 _help() {
   echo "bmd [command] [options]"
+  echo "init: bmd init command is used to initialize bmd tool
+  [--global | glob | global | -g] ==> Initialize in users scope
+  [directory]                     ==> Initialize in give Directory"
 }
 
 _init() {
@@ -78,40 +92,15 @@ _init() {
   fi
 
   info "Directory to install -> ${install_dir}"
+  install_dir="$(realpath "${install_dir}")"
+  info "Directory is ${install_dir}"
   local current_bmd_root="${install_dir}/${bmd_root}"
   mkdir -p "${current_bmd_root}"
   echo "[]" >"${current_bmd_root}/bmd.json"
-}
-
-clone_git_repo() {
-  # ---------------------------------
-  # Clones git repository by given url
-  # Globals:
-  #   modules_directory: The directory where we are putting used modules
-  # Arguments:
-  #   url: $1 -> Url of git repository
-  #   name: $2 -> Name of the module to use
-  # Returns:
-  # ---------------------------------
-  if [[ $# -lt 2 ]]; then
-    err "The repository url and module name must be provider" && exit 1
+  echo "export BMD_CONFIG_DIR=${current_bmd_root}" >>"${HOME}/.bashrc"
+  if [[ -f "${HOME}/.bashrc" ]]; then
+    source "${HOME}/.bashrc"
   fi
-
-  if [[ ! $(command -v git) ]]; then
-    err "Please make sure you have git installed" && exit 1
-  fi
-  local url=$1
-  local module_name=$2
-
-  mkdir -p .modules
-
-  if ! output=$(git clone "${url}" "${modules_directory}/${module_name}" 2>&1); then
-    err_code=$?
-    err "${output}"
-    err "Something went wrong with git clone. Exiting with code ${err_code}."
-    exit ${err_code}
-  fi
-  info "Cloned ${1} for module named ${2}"
 }
 
 start_bmd() {
@@ -129,6 +118,9 @@ start_bmd() {
     ;;
   init)
     _init "$@"
+    ;;
+  install)
+    _install "$@"
     ;;
   *)
     err "Some wrong command goes ..."

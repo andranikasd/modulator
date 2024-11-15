@@ -1,133 +1,135 @@
-# modulator
-Modulator is an package manager for bash
+# BMD (Bash Module Manager) - Workflow Definition
 
-
-# TODO: Build and Implement the "Modulator" Project
-
-## 1. Install Module
-### 1.0 Base utils setup 
-- [ ] Get something like logger
-    - [x] Log info 
-    - [x] Log warnings 
-    - [x] Log errors with additional info ?
-### 1.1. Clone Repositories
-- [ ] Add functionality to clone repositories:
-  - [x] Just clone a repository
-  - [ ] If it's already there then try to update it
-  - [ ] Clone by **branch**.
-  - [ ] Clone by **tag**.
-  - [ ] Clone by **release** (fetch latest or specific).
-  - [ ] Nest this cloning logic into version based cloning ?
-  - [ ] Validate the source repository URL (e.g., check if it's reachable).
-
-### 1.2. Read Configuration File
-- [ ] Decide on the configuration file format (e.g., `TOML`, `YAML`, or `JSON`):
-  - [ ] Write a sample `imports.toml` file:
-    ```toml
-    logger = { url = "https://github.com/andranikas/bash-logger", version = "1.0.0" }
-    utils = { url = "https://github.com/example/utils", branch = "main" }
-    ```
-  - [ ] Implement logic to parse the configuration file:
-    - [ ] Handle missing fields (e.g., default to the `main` branch).
-    - [ ] Validate configuration file syntax.
-
-### 1.3. Put Cloned Files in the Right Place
-- [ ] Define a structured directory for storing modules:
-  - Example directory layout:
-    ```
-    .modules/
-    ├── logger/
-    │   ├── 1.0.0/
-    │   │   └── logger.sh
-    │   └── current -> 1.0.0
-    ├── utils/
-    │   ├── main/
-    │   │   └── utils.sh
-    │   └── current -> main
-    ```
-- [ ] Create a symbolic link (`current`) pointing to the active version.
+## 1. What is a Module?
+A module is a reusable **Bash project** stored in a **public Git repository**. Modules are designed to provide common functions, scripts, or configurations that can be easily integrated into other Bash scripts. A module must:
+- Be stored in a Git repository (public).
+- Be callable from Bash scripts after installation.
+- Optionally support multiple versions.
 
 ---
 
-## 2. Manage Versions
-### 2.1. Version Control
-- [ ] Implement logic to:
-  - [ ] Download and store specific versions based on configuration.
-  - [ ] Create or update `current` symlinks to point to active versions.
+## 2. Installing a Module
+Modules can be installed using the `bmd` command. Installation supports the following formats:
 
-### 2.2. Handle Conflicts
-- [ ] Handle cases where:
-  - [ ] Multiple versions of the same module are requested.
-  - [ ] A module version conflicts with another.
+### 2.1 Install from a Git Repository
+```bash
+bmd install https://github.com/username/module-repo.git as module-name
+```
 
----
+### 2.2 Install Locally
+Install a module from a local directory:
+```bash
+bmd install --local /path/to/module as module-name
+```
 
-## 3. Load Modules
-### 3.1. Source Modules
-- [ ] Implement logic to source modules dynamically:
-  - [ ] Load modules from the `current` symlink.
-  - [ ] Ensure dependencies are resolved before sourcing.
-
-### 3.2. Validate Imports
-- [ ] Ensure all required modules are present before running the script.
-- [ ] Display meaningful error messages for missing or invalid modules.
+### 2.3 Global Installation
+Install a module globally so it’s available system-wide:
+```bash
+bmd install https://github.com/username/module-repo.git as module-name --global
+```
 
 ---
 
-## 4. Command-Line Interface
-### 4.1. CLI Features
-- [ ] Implement basic commands:
-  - [ ] `install` - Install modules based on a configuration file.
-  - [ ] `update` - Update modules to a specific version.
-  - [ ] `list` - List all installed modules and their active versions.
-  - [ ] `remove` - Remove a module or specific version.
+## 3. Tracking Installed Modules
+Installed modules are tracked in a `modules.json` file located in the `.modules` directory of the user’s project or in the global `.modules` directory for global installations.
 
-### 4.2. CLI Enhancements
-- [ ] Add flags for commands:
-  - `--refresh`: Force re-download of all modules.
-  - `--version`: Display the current version of the tool.
-  - `--help`: Display help documentation.
-
----
-
-## 5. Error Handling
-- [ ] Gracefully handle:
-  - [ ] Invalid URLs or unreachable repositories.
-  - [ ] Configuration file parsing errors.
-  - [ ] Failed downloads or incomplete clones.
-
----
-
-## 6. Testing
-### 6.1. Write Test Cases
-- [ ] Test module installation:
-  - [ ] Install by branch, tag, and release.
-- [ ] Test version management:
-  - [ ] Activate specific versions.
-  - [ ] Update to a new version.
-- [ ] Test loading modules:
-  - [ ] Verify sourced modules work as expected.
-- [ ] Test CLI commands:
-  - [ ] Test all commands (`install`, `update`, `list`, `remove`).
-
-### 6.2. Automated Testing
-- [ ] Set up automated testing using:
-  - [ ] Bash unit testing frameworks (e.g., [Bats](https://github.com/bats-core/bats-core)).
-  - [ ] Mock repositories for testing.
+### Example `modules.json`
+```json
+[
+  {
+    "name": "logger",
+    "version": "v1.0.0",
+    "path": "/path/to/.modules/logger",
+    "source": "https://github.com/username/logger.git"
+  },
+  {
+    "name": "local-module",
+    "version": "v0.1.0",
+    "path": "/path/to/.modules/local-module",
+    "source": "./local/path/to/module"
+  }
+]
+```
 
 ---
 
-## 7. Documentation
-### 7.1. Write Documentation
-- [ ] Document the configuration file format with examples.
-- [ ] Document directory structure and how modules are managed.
-- [ ] Provide usage instructions for CLI commands.
+## 4. Organizing Installed Modules
+### Directory Structure
+Modules are stored in a `.modules` directory in the root of the user’s project for local installations or in the user’s home directory for global installations.
 
-### 7.2. Create a README File
-- [ ] Include:
-  - [ ] Project description and purpose.
-  - [ ] Installation instructions.
-  - [ ] Example usage.
-  - [ ] Contribution guidelines.
+Example structure:
+```
+.modules/
+├── logger/
+│   ├── v1.0.0/
+│   │   └── logger.sh
+│   └── current -> v1.0.0
+├── local-module/
+│   ├── v0.1.0/
+│   │   └── module.sh
+│   └── current -> v0.1.0
+```
 
 ---
+
+## 5. Updating Modules
+Modules can be updated using the `bmd update` command. The update process includes:
+1. Checking for changes in the remote repository.
+2. Fetching new versions or tags (if available).
+3. Updating the local copy of the module and the `modules.json` metadata.
+
+Update command example:
+```bash
+bmd update logger
+```
+
+If no versioning system (tags/releases) exists in the repository, the tool will:
+- Fetch the latest changes from the main branch.
+- Increment the local version.
+
+---
+
+## 6. Global Installation
+When using the `--global` flag:
+- Modules are stored in `~/.modules/`.
+- Scripts within the module are symlinked to a directory like `/usr/local/bin`, making them executable globally.
+
+Global installation example:
+```bash
+bmd install https://github.com/username/logger.git as logger --global
+```
+
+---
+
+## 7. Commands Overview
+### Basic Commands
+- `bmd install <repo-url> as <module-name> [--local|--global]`: Installs a module.
+- `bmd update <module-name>`: Updates a module to the latest version.
+- `bmd remove <module-name>`: Removes a module.
+- `bmd list`: Lists all installed modules.
+- `bmd info <module-name>`: Displays details about a module.
+
+---
+
+## 8. Error Handling
+The tool includes robust error handling to:
+- Validate repository URLs before installation.
+- Check for conflicts between module names or versions.
+- Handle network errors gracefully.
+- Provide clear error messages and exit codes for failed installations or updates.
+
+---
+
+## 9. Additional Features
+1. **Dependency Management:** Modules can specify dependencies in a `dependencies` field in their metadata.
+2. **Auto-Update:** The tool can periodically check for updates to installed modules.
+3. **Logging:** Logs can be enabled to debug module installations and updates.
+4. **Compatibility Check:** Ensure modules are compatible with the user’s Bash environment.
+
+---
+
+## 10. Future Enhancements
+- **Module Templates:** Provide templates for creating new modules.
+- **Private Repositories:** Support private Git repositories using SSH keys or tokens.
+- **Multi-Environment Support:** Allow users to sync installed modules across environments.
+```

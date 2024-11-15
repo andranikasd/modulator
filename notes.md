@@ -102,6 +102,7 @@ Here's a refactored, more effective, and atomic checklist for the "Modulator" pr
   - `--local`: Install from a local directory.
   - `--global`: Install globally in the user's home directory.
   - `--version`: Display the version of the `bmd` tool.
+- [ ] Auto-completion needed ?
 
 ---
 

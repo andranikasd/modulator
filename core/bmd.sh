@@ -8,66 +8,98 @@ bmd_root=".bmd"
 declare -A COLORS
 
 COLORS[info]='\033[0;37m'
-COLORS[warrning]='\033[0;33m'
+COLORS[warning]='\033[0;33m'
 COLORS[error]='\033[1;31m'
 COLORS[time]='\033[0;34m'
 COLORS[reset]='\033[0m'
 
 info() {
   if [ "$#" -eq 0 ]; then
-    echo -e "${COLORS[error]}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: function info() requires arguments(str) ${COLORS[reset]}" >&2 && exit 1
+    echo -e "${COLORS[error]}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: [ERROR] The function 'info' requires a message argument. ${COLORS[reset]}" >&2 && exit 1
   fi
 
-  echo -e "${COLORS[time]}${DATE}${COLORS[reset]} |${COLORS[info]}INFO${COLORS[reset]}| ${1}"
+  echo -e "${COLORS[time]}${DATE}${COLORS[reset]} |${COLORS[info]} INFO ${COLORS[reset]}| ${1}"
 }
 
 warn() {
   if [ "$#" -eq 0 ]; then
-    echo -e "${COLORS[error]}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: function warn() requires arguments(str) ${COLORS[reset]}" >&2 && exit 1
+    echo -e "${COLORS[error]}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: [ERROR] The function 'warn' requires a message argument. ${COLORS[reset]}" >&2 && exit 1
   fi
 
-  echo -e "${COLORS[time]}${DATE}${COLORS[reset]} |${COLORS[warrning]}WARN${COLORS[reset]}| ${1}"
+  echo -e "${COLORS[time]}${DATE}${COLORS[reset]} |${COLORS[warning]} WARNING ${COLORS[reset]}| ${1}"
 }
 
 err() {
   if [ "$#" -eq 0 ]; then
-    echo -e "${COLORS[error]}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: function err() requires arguments(str) ${COLORS[reset]}" >&2 && exit 1
+    echo -e "${COLORS[error]}[$(date +'%Y-%m-%dT%H:%M:%S%z')]: [ERROR] The function 'err' requires a message argument. ${COLORS[reset]}" >&2 && exit 1
   fi
 
-  echo -e "${COLORS[time]}${DATE}${COLORS[reset]} |${COLORS[error]}ERROR${COLORS[reset]}| ${1}"
+  echo -e "${COLORS[time]}${DATE}${COLORS[reset]} |${COLORS[error]} ERROR ${COLORS[reset]}| ${1}"
 }
 
 _install() {
-  if [[ -z ${BMD_CONFIG_DIR} ]]; then
-    err "Oops ... Please set BMD_CONFIG_DIR environment variable"
-    exit 1
+  if [[ ! -d "${PWD}/${bmd_root}" ]]; then
+    err "BMD is not configured for current dir, to install module for global scope please use -g flag"
+    exit
   fi
-  if [[ ! -d "${BMD_CONFIG_DIR}" && ! -d "${HOME}/.bmd" ]]; then
-    err "Oops ... Your BMD config file is not found"
-  fi
-  info "Installing package .. "
+  shift # Remove the function name from arguments
+  local arguments=("${@}")
+
+  for ((i = 0; i < ${#arguments[@]}; i++)); do
+    case "${arguments[i]}" in
+    --global | -g | global | glob)
+      if [[ ! -d "${HOME}/${bmd_root}" ]]; then
+        err "BMD is not configured for user scope. Please Initialize bmd again"
+        _help
+      fi
+      break
+      ;;
+    *)
+      if [[ ! -d "${arguments[i]}" ]]; then
+        err "Oops specified argument does not exist."
+        _help
+        exit 1
+      fi
+      ;;
+    esac
+  done
+
 }
 
-# Available commands `install`, `update`, `remove`, `help`
 _help() {
-  echo "bmd [command] [options]"
-  echo "init: bmd init command is used to initialize bmd tool
-  [--global | glob | global | -g] ==> Initialize in users scope
-  [directory]                     ==> Initialize in give Directory"
+  echo "==============================================================="
+  echo "                         BMD Tool Help                        "
+  echo "==============================================================="
+  echo "Usage: bmd [command] [options]"
+  echo ""
+  echo "Commands:"
+  echo "  init     Initialize the BMD tool in the current directory or globally."
+  echo "           Options:"
+  echo "             --global | -g     Initialize BMD in the user's home directory."
+  echo "             [directory]       Specify a directory for initialization."
+  echo ""
+  echo "  install  Ensure BMD is initialized in the appropriate scope."
+  echo ""
+  echo "  help     Display this help message."
+  echo ""
+  echo "Examples:"
+  echo "  bmd init --global            Initialize BMD globally."
+  echo "  bmd init /path/to/directory  Initialize BMD in the specified directory."
+  echo "  bmd install                  Check if BMD is properly initialized."
+  echo "==============================================================="
 }
 
 _init() {
   if [[ "${#}" -eq 0 ]]; then
-    err "Looks like you dont know how to use this ..."
+    err "No options provided for initialization."
     _help
     exit 1
   fi
 
-  shift # Shifting to not get functions name
+  shift # Remove the function name from arguments
   local arguments=("${@}")
   local install_dir="${PWD}"
 
-  # Parsing the arguments to function
   for ((i = 0; i < ${#arguments[@]}; i++)); do
     case "${arguments[i]}" in
     --global | -g | global | glob)
@@ -76,7 +108,7 @@ _init() {
       ;;
     *)
       if [[ ! -d "${arguments[i]}" ]]; then
-        err "Provided directory does not exists"
+        err "The specified directory '${arguments[i]}' does not exist. Please provide a valid directory."
         exit 1
       fi
       install_dir="${arguments[i]}"
@@ -84,29 +116,24 @@ _init() {
     esac
   done
 
-  # Ensure install_dir is set
   if [[ -z "${install_dir}" ]]; then
-    err "Installation directory could not be determined."
+    err "Unable to determine the installation directory."
     _help
     exit 1
   fi
 
-  info "Directory to install -> ${install_dir}"
+  info "Initializing BMD in directory: ${install_dir}"
   install_dir="$(realpath "${install_dir}")"
-  info "Directory is ${install_dir}"
+  info "Resolved directory path: ${install_dir}"
   local current_bmd_root="${install_dir}/${bmd_root}"
   mkdir -p "${current_bmd_root}"
   echo "[]" >"${current_bmd_root}/bmd.json"
-  echo "export BMD_CONFIG_DIR=${current_bmd_root}" >>"${HOME}/.bashrc"
-  if [[ -f "${HOME}/.bashrc" ]]; then
-    source "${HOME}/.bashrc"
-  fi
+  info "BMD successfully initialized at: ${current_bmd_root}"
 }
 
 start_bmd() {
   if [[ "${#}" -eq 0 ]]; then
-    err "No command options was provided"
-    _help
+    err "No command provided! Use 'bmd help' to view available commands."
     exit 1
   fi
 
@@ -123,7 +150,7 @@ start_bmd() {
     _install "$@"
     ;;
   *)
-    err "Some wrong command goes ..."
+    err "Invalid command: '${command}'. Please use 'bmd help' for valid options."
     _help
     ;;
   esac

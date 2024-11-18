@@ -1,6 +1,6 @@
-Here's a refactored, more effective, and atomic checklist for the "Modulator" project:
+Here's a refactored, more effective, and atomic checklist for the "Modulator (BMD)" project:
 
-# TODO: Build and Implement the "Modulator" Project
+# TODO: Build and Implement the "Modulator (BMD)" Project
 
 ## 1. Install Module
 
@@ -10,9 +10,11 @@ Here's a refactored, more effective, and atomic checklist for the "Modulator" pr
   - [x] Implement `log_warning` for warnings.
   - [x] Implement `log_error` to log errors with detailed info.
 - [x] Test the logger utility for various log levels.
+- [x] Implement basic user input handling
+- [x] Implement basic init function for bmd
 
 ### 1.1 Read Configuration File
-- [ ] Choose a configuration file format (e.g., `TOML`, `YAML`, or `JSON`).
+- [x] Choose a configuration file format (e.g., `TOML`, `YAML`, or `JSON`).
 - [ ] Write a parser for the configuration file format:
   - [ ] Read module name, version, and source URL from the file.
   - [ ] Handle missing or incomplete fields (e.g., default to `main` branch).
@@ -22,7 +24,7 @@ Here's a refactored, more effective, and atomic checklist for the "Modulator" pr
 
 ### 1.2 Clone Repositories
 - [ ] Create a function to handle basic repository cloning:
-  - [x] Clone a repository to a specified directory.
+  - [ ] Clone a repository to a specified directory.
   - [ ] Validate the success of the clone operation and handle failures.
 - [ ] Add repository tracking:
   - [ ] Keep a list of cloned repositories in a metadata file.

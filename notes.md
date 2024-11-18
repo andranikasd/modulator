@@ -13,11 +13,11 @@
 
 ### 1.1 Read Configuration File
 - [x] Choose a configuration file format (e.g., `TOML`, `YAML`, or `JSON`).
-- [ ] Write a parser for the configuration file format:
-  - [ ] Read module name, version, and source URL from the file.
-  - [ ] Handle missing or incomplete fields (e.g., default to `main` branch).
-  - [ ] Validate configuration syntax.
-- [ ] Write a test configuration file and verify parsing.
+- [x] Write a parser for the configuration file format:
+  - [x] Read module name, version, and source URL from the file.
+  - [x] Handle missing or incomplete fields (e.g., default to `main` branch).
+  - [x] Validate configuration syntax.
+- [x] Write a test configuration file and verify parsing.
 
 
 ### 1.2 Clone Repositories

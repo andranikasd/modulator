@@ -11,7 +11,16 @@ Here's a refactored, more effective, and atomic checklist for the "Modulator" pr
   - [x] Implement `log_error` to log errors with detailed info.
 - [x] Test the logger utility for various log levels.
 
-### 1.1 Clone Repositories
+### 1.1 Read Configuration File
+- [ ] Choose a configuration file format (e.g., `TOML`, `YAML`, or `JSON`).
+- [ ] Write a parser for the configuration file format:
+  - [ ] Read module name, version, and source URL from the file.
+  - [ ] Handle missing or incomplete fields (e.g., default to `main` branch).
+  - [ ] Validate configuration syntax.
+- [ ] Write a test configuration file and verify parsing.
+
+
+### 1.2 Clone Repositories
 - [ ] Create a function to handle basic repository cloning:
   - [x] Clone a repository to a specified directory.
   - [ ] Validate the success of the clone operation and handle failures.
@@ -28,14 +37,6 @@ Here's a refactored, more effective, and atomic checklist for the "Modulator" pr
 - [ ] Integrate cloning logic with a version-based system:
   - [ ] Support cloning into directories named by version.
   - [ ] Validate the repository URL before cloning.
-
-### 1.2 Read Configuration File
-- [ ] Choose a configuration file format (e.g., `TOML`, `YAML`, or `JSON`).
-- [ ] Write a parser for the configuration file format:
-  - [ ] Read module name, version, and source URL from the file.
-  - [ ] Handle missing or incomplete fields (e.g., default to `main` branch).
-  - [ ] Validate configuration syntax.
-- [ ] Write a test configuration file and verify parsing.
 
 ### 1.3 Organize Cloned Files
 - [ ] Define a structured directory layout for storing modules:

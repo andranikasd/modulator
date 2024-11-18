@@ -21,25 +21,19 @@
 
 
 ### 1.2 Clone Repositories
-- [ ] Create a function to handle basic repository cloning:
-  - [ ] Clone a repository to a specified directory.
-  - [ ] Validate the success of the clone operation and handle failures.
-- [ ] Add repository tracking:
-  - [ ] Keep a list of cloned repositories in a metadata file.
-  - [ ] Check if a repository is already cloned before attempting to re-clone.
+- [x] Create a function to handle basic repository cloning:
+  - [x] Clone a repository to a specified directory.
+  - [x] Validate the success of the clone operation and handle failures.
+- [x] Add repository tracking:
+  - [x] Keep a list of cloned repositories in a metadata file.
+  - [x] Check if a repository is already cloned before attempting to re-clone.
 - [ ] Add repository update logic:
   - [ ] Pull updates for already cloned repositories.
   - [ ] Handle conflicts between local and remote changes.
-- [ ] Implement cloning by specific versions:
-  - [ ] Clone by **branch**.
-  - [ ] Clone by **tag**.
-  - [ ] Clone by **release** (fetch latest or specific).
 - [ ] Integrate cloning logic with a version-based system:
-  - [ ] Support cloning into directories named by version.
-  - [ ] Validate the repository URL before cloning.
 
 ### 1.3 Organize Cloned Files
-- [ ] Define a structured directory layout for storing modules:
+- [x] Define a structured directory layout for storing modules:
   - Example:
     ```
     .modules/
@@ -48,10 +42,10 @@
     │   │   └── module files...
     │   └── current -> version
     ```
-- [ ] Implement logic to:
-  - [ ] Move cloned repositories into the appropriate directory.
-  - [ ] Create symlinks pointing `current` to the active version.
-- [ ] Test file organization with multiple modules and versions.
+- [x] Implement logic to:
+  - [x] Move cloned repositories into the appropriate directory.
+  - [x] Create symlinks pointing `current` to the active version.
+- [x] Test file organization with multiple modules and versions.
 
 ---
 
@@ -59,7 +53,7 @@
 
 ### 2.1 Implement Version Control
 - [ ] Write logic to:
-  - [ ] Store and manage specific versions of modules.
+  - [x] Store and manage specific versions of modules.
   - [ ] Update the `current` symlink to the active version.
 - [ ] Add functionality to compare local and remote versions:
   - [ ] Fetch remote version details from tags or releases.
@@ -67,7 +61,7 @@
 
 ### 2.2 Handle Version Conflicts
 - [ ] Add logic to detect and handle multiple versions of the same module:
-  - [ ] Allow coexisting versions or override with user confirmation.
+  - [x] Allow coexisting versions or override with user confirmation.
   - [ ] Log and resolve conflicts between module versions.
 
 ---
@@ -90,17 +84,15 @@
 
 ### 4.1 Basic CLI Features
 - [ ] Create a `bmd` command-line interface:
-  - [ ] `install`: Install modules from repositories.
+  - [x] `install`: Install modules from repositories.
   - [ ] `update`: Update installed modules.
-  - [ ] `remove`: Remove a specific module or version.
+  - [x] `remove`: Remove a specific module or version.
   - [ ] `list`: List all installed modules and their versions.
   - [ ] `info`: Display details about a specific module.
 - [ ] Implement help flags for each command.
 
 ### 4.2 CLI Enhancements
-- [ ] Add optional flags:
-  - `--refresh`: Force re-download of a module.
-  - `--local`: Install from a local directory.
+- [x] Add optional flags:
   - `--global`: Install globally in the user's home directory.
   - `--version`: Display the version of the `bmd` tool.
 - [ ] Auto-completion needed ?

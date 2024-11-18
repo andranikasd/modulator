@@ -65,21 +65,8 @@ _install() {
   done
 }
 
-lex() {
-
-}
-# Generic function to wrap all bmd config file operations in it
-# Arguments:
-#   file_path: bmd config file path (Required)
-#   command: `add`, `update`, `remove`, `check`: Operations available for bmd config (Required)
-#   arguments: `module-name`, `module-path` or `module-url`, `cversion` (Current version), `nversion` (New version)
-#
-parser() {
-  local tokens = ()
-  shift ## Shifting $1 function name argument
-  local arguments=("${@}")
-
-
+_update() {
+  info "Updateing module"
 }
 
 _help() {
@@ -162,8 +149,11 @@ start_bmd() {
   init)
     _init "$@"
     ;;
-  install)
+  install | i | inst)
     _install "$@"
+    ;;
+  update | u | upd)
+    _update "$@"
     ;;
   *)
     err "Invalid command: '${command}'. Please use 'bmd help' for valid options."

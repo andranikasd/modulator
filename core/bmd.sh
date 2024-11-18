@@ -18,27 +18,25 @@ COLORS[time]='\033[0;34m'
 COLORS[reset]='\033[0m'
 
 info() {
-  [[ $# -eq 0 ]] && {
-    echo -e "${COLORS[error]}$(date +'%Y-%m-%dT%H:%M:%S%z'): [ERROR] 'info' requires a message.${COLORS[reset]}" >&2
-    exit 1
-  }
   echo -e "${COLORS[time]}$(date +'%Y-%m-%dT%H:%M:%S%z')${COLORS[reset]} |${COLORS[info]} INFO ${COLORS[reset]}| $1"
 }
 
 warn() {
-  [[ $# -eq 0 ]] && {
-    echo -e "${COLORS[error]}$(date +'%Y-%m-%dT%H:%M:%S%z'): [ERROR] 'warn' requires a message.${COLORS[reset]}" >&2
-    exit 1
-  }
   echo -e "${COLORS[time]}$(date +'%Y-%m-%dT%H:%M:%S%z')${COLORS[reset]} |${COLORS[warning]} WARNING ${COLORS[reset]}| $1"
 }
 
 err() {
-  [[ $# -eq 0 ]] && {
-    echo -e "${COLORS[error]}$(date +'%Y-%m-%dT%H:%M:%S%z'): [ERROR] 'err' requires a message.${COLORS[reset]}" >&2
-    exit 1
-  }
-  echo -e "${COLORS[time]}$(date +'%Y-%m-%dT%H:%M:%S%z')${COLORS[reset]} |${COLORS[error]} ERROR ${COLORS[reset]}| $1"
+  echo -e "${COLORS[time]}$(date +'%Y-%m-%dT%H:%M:%S%z')${COLORS[reset]} |${COLORS[error]} ERROR ${COLORS[reset]}| $1" >&2
+  exit 1
+}
+
+validate_required_commands() {
+  local required=("git" "find" "cp" "ln")
+  for cmd in "${required[@]}"; do
+    if ! command -v "$cmd" &>/dev/null; then
+      err "Required command '$cmd' is missing. Please install it and try again."
+    fi
+  done
 }
 
 JSON_parse_array() {
@@ -60,12 +58,6 @@ JSON_parse_module() {
   modules["$name.source"]="$source"
   modules["$name.version"]="$version"
   modules["$name.path"]="$path"
-}
-
-module_read() {
-  local module_name="$1"
-  local property="$2"
-  echo "${modules["$module_name.$property"]}"
 }
 
 module_write() {
@@ -91,9 +83,8 @@ module_write() {
 JSON_parse() {
   local file="${1}"
   json_oneline=""
-  if [ ! -f "${file}" ]; then
+  if [[ ! -f "${file}" ]]; then
     err "JSON file '${file}' not found."
-    exit 1
   fi
   while IFS= read -r line; do
     json_oneline+="${line}"
@@ -103,33 +94,20 @@ JSON_parse() {
 
 check_module_exists() {
   local module_name=$1
-  if [[ -n "${modules["$module_name.source"]}" || -n "${modules["$module_name.version"]}" || -n "${modules["$module_name.path"]}" ]]; then
-    info "Module '${module_name}' exists."
-    return 0
-  else
-    warn "Module '${module_name}' does not exist."
-    return 1
-  fi
+  [[ -n "${modules["$module_name.source"]}" ]] && return 0 || return 1
 }
 
 install_cmd() {
-  if [[ ! -d "${PWD}/${bmd_root}" && ! "$*" =~ "--global" ]]; then
-    err "BMD is not configured for the current directory. Use the --global flag for global scope."
-    exit 1
-  fi
-
   shift
   local arguments=("${@}")
   local module_url module_name
 
-  # Parse arguments
   for ((i = 0; i < ${#arguments[@]}; i++)); do
     case "${arguments[i]}" in
     --global | -g)
       mode="global"
       if [[ ! -d "${HOME}/${bmd_root}" ]]; then
-        err "BMD is not configured for global scope. Please initialize BMD with 'bmd init --global'."
-        exit 1
+        err "Global scope is not initialized. Run 'bmd init --global' first."
       fi
       json_file="${HOME}/${bmd_root}/bmd.json"
       ;;
@@ -140,58 +118,90 @@ install_cmd() {
         module_name="${arguments[i]}"
       else
         err "Unexpected argument: ${arguments[i]}"
-        exit 1
       fi
       ;;
     esac
   done
 
-  # Default to local mode if not specified
   if [[ -z "$mode" ]]; then
     mode="local"
     json_file="${PWD}/${bmd_root}/bmd.json"
   fi
 
-  # Ensure the JSON file exists
   if [[ ! -f "$json_file" ]]; then
-    err "BMD configuration file '$json_file' not found. Please initialize BMD first."
-    exit 1
+    err "Configuration file '$json_file' not found. Please initialize BMD first."
   fi
 
-  # Parse the JSON file and check for module existence
   JSON_parse "$json_file"
   if check_module_exists "$module_name"; then
     err "Module '$module_name' is already installed."
-    exit 1
   fi
 
-  # Add module details
-  modules["$module_name.source"]="$module_url"
-  modules["$module_name.version"]="1.0.0"
-  modules["$module_name.path"]="${BMD_DIR:-$PWD}/$module_name"
-  mkdir -p "${modules["$module_name.path"]}"
+  install_module "$module_url" "$module_name"
+}
 
-  # Write updated JSON to file
+install_module() {
+  local module_url=$1
+  local module_name=$2
+  local module_version=${3:-v1.0.0}
+
+  validate_required_commands
+
+  local module_dir="${BMD_DIR:-$PWD}/.bmd/$module_name"
+  local version_dir="${module_dir}/${module_version}"
+
+  modules["$module_name.source"]="$module_url"
+  modules["$module_name.version"]="$module_version"
+  modules["$module_name.path"]="$version_dir"
+
+  mkdir -p "$version_dir"
+
+  local temp_dir
+  temp_dir=$(mktemp -d)
+
+  git clone --depth 1 "$module_url" "$temp_dir" >/dev/null 2>&1 || {
+    err "Failed to clone repository from $module_url."
+  }
+
+  local shell_scripts
+  shell_scripts=$(find "$temp_dir" -name "*.sh" -type f)
+  [[ -z "$shell_scripts" ]] && {
+    err "No shell scripts found in repository."
+  }
+
+  for script in $shell_scripts; do
+    cp "$script" "$version_dir/"
+  done
+
+  local module_sh="${version_dir}/module.sh"
+  {
+    echo "#!/bin/bash"
+    echo "for script in \"\$(dirname \"\${BASH_SOURCE[0]}\")\"/*.sh; do"
+    echo "  [[ -f \"\$script\" && \"\$script\" != \"\${BASH_SOURCE[0]}\" ]] && source \"\$script\""
+    echo "done"
+  } >"$module_sh"
+  chmod +x "$module_sh"
+
+  ln -snf "$version_dir" "$module_dir/current"
+
+  rm -rf "$temp_dir"
+
   module_write "$json_file"
-  info "Module '$module_name' installed and configuration updated."
+  info "Module '$module_name' installed successfully."
 }
 
 _help() {
-  echo "==============================================================="
-  echo "                         BMD Tool Help                        "
-  echo "==============================================================="
   echo "Usage: bmd [command] [options]"
-  echo ""
   echo "Commands:"
-  echo "  init     Initialize the BMD tool in the current directory or globally."
-  echo "  install  Install a module in the appropriate scope."
-  echo "  help     Display this help message."
-  echo ""
+  echo "  init       Initialize BMD in the current or global scope."
+  echo "  install    Install a module."
+  echo "  help       Display help information."
 }
 
 _init() {
   if [[ "${#}" -eq 0 ]]; then
     err "No options provided for initialization."
+
     _help
     exit 1
   fi
@@ -229,15 +239,72 @@ _init() {
   info "BMD successfully initialized at: ${install_dir}/${bmd_root}"
 }
 
-start_bmd() {
-  if [[ "${#}" -eq 0 ]]; then
-    err "No command provided! Use 'bmd help' to view available commands."
-    exit 1
+remove_cmd() {
+  shift
+  local arguments=("${@}")
+  local module_name
+
+  # Parse arguments
+  for ((i = 0; i < ${#arguments[@]}; i++)); do
+    case "${arguments[i]}" in
+    --global | -g)
+      mode="global"
+      if [[ ! -d "${HOME}/${bmd_root}" ]]; then
+        err "Global scope is not initialized. Run 'bmd init --global' first."
+      fi
+      json_file="${HOME}/${bmd_root}/bmd.json"
+      ;;
+    *)
+      if [[ -z "$module_name" ]]; then
+        module_name="${arguments[i]}"
+      else
+        err "Unexpected argument: ${arguments[i]}"
+      fi
+      ;;
+    esac
+  done
+
+  if [[ -z "$mode" ]]; then
+    mode="local"
+    json_file="${PWD}/${bmd_root}/bmd.json"
   fi
 
-  local command=$1
+  if [[ -z "$module_name" ]]; then
+    err "Module name is required. Usage: bmd remove [--global] <module_name>"
+  fi
 
-  case $command in
+  # Ensure the JSON file exists
+  if [[ ! -f "$json_file" ]]; then
+    err "BMD configuration file '$json_file' not found. Please initialize BMD first."
+  fi
+
+  # Parse the JSON file and check for module existence
+  JSON_parse "$json_file"
+  if ! check_module_exists "$module_name"; then
+    err "Module '$module_name' is not installed."
+  fi
+
+  # Get module path
+  local module_path="${modules["$module_name.path"]}"
+  local module_dir=$(dirname "$module_path")
+
+  # Remove the module files
+  if [[ -d "$module_dir" ]]; then
+    info "Removing module files from $module_dir"
+    rm -rf "$module_dir"
+  fi
+
+  # Update the JSON configuration
+  unset modules["$module_name.source"]
+  unset modules["$module_name.version"]
+  unset modules["$module_name.path"]
+
+  module_write "$json_file"
+  info "Module '$module_name' has been successfully removed."
+}
+
+start_bmd() {
+  case $1 in
   help | -h | --help)
     _help
     ;;
@@ -247,12 +314,14 @@ start_bmd() {
   install | i | inst)
     install_cmd "$@"
     ;;
+  remove | rm | uninstall)
+    remove_cmd "$@"
+    ;;
   *)
-    err "Invalid command: '${command}'. Please use 'bmd help' for valid options."
-    _help
+    err "Invalid command '$1'."
     ;;
   esac
 }
 
-start_bmd "${@}"
 
+start_bmd "$@"

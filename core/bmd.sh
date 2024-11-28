@@ -286,7 +286,8 @@ remove_cmd() {
 
   # Get module path
   local module_path="${modules["$module_name.path"]}"
-  local module_dir=$(dirname "$module_path")
+  local module_dir
+  module_dir=$(dirname "$module_path")
 
   # Remove the module files
   if [[ -d "$module_dir" ]]; then
@@ -322,6 +323,5 @@ start_bmd() {
     ;;
   esac
 }
-
 
 start_bmd "$@"
